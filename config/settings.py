@@ -79,27 +79,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 import os
+import dj_database_url
 
-# Configuración para Railway (variables de entorno)
+# Configuración para Railway (DATABASE_URL proporcionada automáticamente)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'ferreteria_db'),
-        'USER': os.environ.get('DATABASE_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
-
-# Configuración SQLite para desarrollo local (si no hay variables de entorno Railway)
-if not os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 
 
 # Password validation
