@@ -1,0 +1,14 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application"
+  },
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "config.settings",
+    "SECRET_KEY": "django-insecure-change-this-in-production",
+    "DEBUG": "False",
+    "ALLOWED_HOSTS": "*"
+  }
+}
