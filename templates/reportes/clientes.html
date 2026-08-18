@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Clientes - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Reporte de Clientes</h2>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3 style="color: #3498db; margin-bottom: 0.5rem;">Total Clientes</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_clientes }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #27ae60; margin-bottom: 0.5rem;">Activos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ clientes_activos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #95a5a6; margin-bottom: 0.5rem;">Inactivos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ clientes_inactivos }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Clientes Recientes</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Nombre</th>
+                <th style="padding: 0.5rem; text-align: left;">Documento</th>
+                <th style="padding: 0.5rem; text-align: left;">Teléfono</th>
+                <th style="padding: 0.5rem; text-align: left;">Email</th>
+                <th style="padding: 0.5rem; text-align: left;">Estado</th>
+                <th style="padding: 0.5rem; text-align: left;">Fecha Registro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes_recientes %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ cliente.nombre }}</td>
+                <td style="padding: 0.5rem;">{{ cliente.tipo_documento|default:"-" }} {{ cliente.numero_documento|default:"-" }}</td>
+                <td style="padding: 0.5rem;">{{ cliente.telefono|default:"-" }}</td>
+                <td style="padding: 0.5rem;">{{ cliente.email|default:"-" }}</td>
+                <td style="padding: 0.5rem;">
+                    <span style="padding: 0.25rem 0.5rem; border-radius: 4px; background-color: {% if cliente.activo %}#27ae60{% else %}#e74c3c{% endif %}; color: white;">
+                        {% if cliente.activo %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </td>
+                <td style="padding: 0.5rem;">{{ cliente.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 0.5rem; text-align: center;">No hay clientes registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{% url 'dashboard_reportes' %}" class="btn">Volver a Reportes</a>
+</div>
+{% endblock %}

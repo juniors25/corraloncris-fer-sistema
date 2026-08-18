@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.nombre }} - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+            {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px;">
+            {% else %}
+            <div style="width: 100%; height: 300px; background-color: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999;">
+                Sin imagen
+            </div>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h2 style="margin-bottom: 1rem;">{{ producto.nombre }}</h2>
+            <p style="color: #666; margin-bottom: 1rem;">{{ producto.descripcion|default:"Sin descripción" }}</p>
+            
+            <div style="margin-bottom: 1rem;">
+                <p><strong>Categoría:</strong> {{ producto.categoria.nombre|default:"Sin categoría" }}</p>
+                <p><strong>Código de Barras:</strong> {{ producto.codigo_barras|default:"No asignado" }}</p>
+                <p><strong>Código QR:</strong> {{ producto.codigo_qr|default:"No asignado" }}</p>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <p style="font-size: 1.5rem; font-weight: bold; color: #27ae60;">${{ producto.precio_venta }}</p>
+                <p style="color: #666;">Precio de costo: ${{ producto.precio_costo }}</p>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <p style="color: {% if producto.stock_bajo %}#e74c3c{% else %}#27ae60{% endif %}; font-weight: bold;">
+                    Stock: {{ producto.stock_actual }} {{ producto.unidad_medida }}
+                    {% if producto.stock_bajo %}(¡Stock bajo!){% endif %}
+                </p>
+                <p style="color: #666;">Stock mínimo: {{ producto.stock_minimo }}</p>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <button onclick="agregarAlCarrito({{ producto.id }})" class="btn" style="width: 100%;">Agregar al Carrito</button>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn" style="width: 100%; text-align: center;">Iniciar Sesión para Comprar</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="card" style="margin-top: 1.5rem;">
+    <h3>Historial de Movimientos de Stock</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Fecha</th>
+                <th style="padding: 0.5rem; text-align: left;">Tipo</th>
+                <th style="padding: 0.5rem; text-align: left;">Cantidad</th>
+                <th style="padding: 0.5rem; text-align: left;">Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movimiento in producto.movimientos.all %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                <td style="padding: 0.5rem;">{{ movimiento.get_tipo_display }}</td>
+                <td style="padding: 0.5rem;">{{ movimiento.cantidad }}</td>
+                <td style="padding: 0.5rem;">{{ movimiento.motivo|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="padding: 0.5rem; text-align: center;">No hay movimientos registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<script>
+function agregarAlCarrito(productoId) {
+    // Aquí se implementaría la lógica del carrito
+    alert('Funcionalidad de carrito en desarrollo');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido Online - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Realizar Pedido Online</h2>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div>
+            <h3 style="margin-bottom: 1rem;">Datos del Cliente</h3>
+            <form id="pedido-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo: *</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefono">Teléfono: *</label>
+                    <input type="tel" id="telefono" name="telefono" required placeholder="Para notificaciones por WhatsApp">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="direccion">Dirección de Entrega:</label>
+                    <textarea id="direccion" name="direccion" rows="3"></textarea>
+                </div>
+            </form>
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 1rem;">Carrito de Compra</h3>
+            
+            {% if carrito_mode %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">
+                <p style="margin: 0;">🛒 Productos agregados desde el catálogo</p>
+            </div>
+            {% else %}
+            <div style="margin-bottom: 1rem;">
+                <input type="text" id="busqueda-producto" placeholder="Buscar producto..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <button onclick="irAlCatalogo()" class="btn" style="margin-top: 0.5rem;">Ir al Catálogo</button>
+            </div>
+            {% endif %}
+            
+            <div id="resultados-busqueda" style="margin-bottom: 1rem;"></div>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="padding: 0.5rem; text-align: left;">Producto</th>
+                        <th style="padding: 0.5rem; text-align: left;">Cantidad</th>
+                        <th style="padding: 0.5rem; text-align: left;">Precio</th>
+                        <th style="padding: 0.5rem; text-align: left;">Subtotal</th>
+                        <th style="padding: 0.5rem; text-align: left;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="carrito-items">
+                </tbody>
+            </table>
+            
+            <div class="card" style="background-color: #f8f9fa; margin-top: 1rem;">
+                <p style="font-size: 1.25rem; font-weight: bold;"><strong>Total:</strong> $<span id="total">0.00</span></p>
+                <button onclick="enviarPedido()" class="btn" style="width: 100%; margin-top: 1rem;">Enviar Pedido por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let carrito = [];
+
+// Cargar carrito del localStorage al iniciar
+window.onload = function() {
+    const carritoGuardado = localStorage.getItem('carrito');
+    if (carritoGuardado) {
+        carrito = JSON.parse(carritoGuardado);
+        actualizarCarrito();
+    }
+};
+
+function irAlCatalogo() {
+    window.location.href = '/productos/';
+}
+
+function agregarAlCarrito(producto) {
+    const itemExistente = carrito.find(item => item.producto_id === producto.id);
+    
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({
+            producto_id: producto.id,
+            nombre: producto.nombre,
+            precio: producto.precio_venta,
+            cantidad: 1
+        });
+    }
+    
+    guardarCarrito();
+    actualizarCarrito();
+}
+
+function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+function actualizarCarrito() {
+    const tbody = document.getElementById('carrito-items');
+    tbody.innerHTML = '';
+    
+    let total = 0;
+    
+    carrito.forEach((item, index) => {
+        const itemSubtotal = item.precio * item.cantidad;
+        total += itemSubtotal;
+        
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">${item.nombre}</td>
+                <td style="padding: 0.5rem;">
+                    <input type="number" value="${item.cantidad}" min="1" onchange="actualizarCantidad(${index}, this.value)" style="width: 60px; padding: 0.25rem;">
+                </td>
+                <td style="padding: 0.5rem;">$${item.precio}</td>
+                <td style="padding: 0.5rem;">$${itemSubtotal.toFixed(2)}</td>
+                <td style="padding: 0.5rem;">
+                    <button onclick="eliminarDelCarrito(${index})" class="btn btn-danger" style="padding: 0.25rem 0.5rem;">X</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    document.getElementById('total').textContent = total.toFixed(2);
+}
+
+function actualizarCantidad(index, cantidad) {
+    carrito[index].cantidad = parseInt(cantidad);
+    guardarCarrito();
+    actualizarCarrito();
+}
+
+function eliminarDelCarrito(index) {
+    carrito.splice(index, 1);
+    guardarCarrito();
+    actualizarCarrito();
+}
+
+function enviarPedido() {
+    if (carrito.length === 0) {
+        alert('El carrito está vacío. Agregue productos desde el catálogo.');
+        return;
+    }
+    
+    const nombre = document.getElementById('nombre').value;
+    const telefono = document.getElementById('telefono').value;
+    
+    if (!nombre || !telefono) {
+        alert('Por favor complete nombre y teléfono');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('pedido-form'));
+    formData.append('items', JSON.stringify(carrito));
+    
+    fetch('{% url "pedido_online" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Pedido enviado exitosamente.\n\nRecibirá una confirmación por WhatsApp en breve con los detalles de su pedido.');
+            carrito = [];
+            actualizarCarrito();
+            localStorage.removeItem('carrito');
+            document.getElementById('pedido-form').reset();
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al enviar el pedido. Por favor intente nuevamente.');
+    });
+}
+</script>
+{% endblock %}

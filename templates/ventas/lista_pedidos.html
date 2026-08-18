@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos Online - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Pedidos Online</h2>
+
+<div class="card">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Número</th>
+                <th style="padding: 0.5rem; text-align: left;">Cliente</th>
+                <th style="padding: 0.5rem; text-align: left;">Teléfono</th>
+                <th style="padding: 0.5rem; text-align: left;">Estado</th>
+                <th style="padding: 0.5rem; text-align: left;">Total</th>
+                <th style="padding: 0.5rem; text-align: left;">Fecha</th>
+                <th style="padding: 0.5rem; text-align: left;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ pedido.venta.numero }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.nombre_cliente }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.telefono }}</td>
+                <td style="padding: 0.5rem;">
+                    <span style="padding: 0.25rem 0.5rem; border-radius: 4px; background-color: 
+                        {% if pedido.estado == 'recibido' %}#f39c12
+                        {% elif pedido.estado == 'procesando' %}#3498db
+                        {% elif pedido.estado == 'listo' %}#27ae60
+                        {% elif pedido.estado == 'entregado' %}#95a5a6
+                        {% else %}#e74c3c{% endif %}; color: white;">
+                        {{ pedido.get_estado_display }}
+                    </span>
+                </td>
+                <td style="padding: 0.5rem;">${{ pedido.venta.total }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.created_at|date:"d/m/Y H:i" }}</td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'detalle_pedido' pedido.id %}" class="btn" style="padding: 0.25rem 0.5rem;">Ver</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 0.5rem; text-align: center;">No hay pedidos registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

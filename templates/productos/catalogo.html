@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Catálogo de Productos</h2>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 200px;">
+            <input type="text" name="busqueda" placeholder="Buscar productos..." value="{{ request.GET.busqueda }}">
+        </div>
+        <div class="form-group" style="flex: 1; min-width: 200px;">
+            <select name="categoria">
+                <option value="">Todas las categorías</option>
+                {% for categoria in categorias %}
+                <option value="{{ categoria.id }}" {% if request.GET.categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                    {{ categoria.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Buscar</button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+    {% for producto in productos %}
+    <div class="card">
+        {% if producto.imagen %}
+        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 1rem;">
+        {% endif %}
+        <h3 style="margin-bottom: 0.5rem;">{{ producto.nombre }}</h3>
+        <p style="color: #666; margin-bottom: 0.5rem;">{{ producto.categoria.nombre|default:"Sin categoría" }}</p>
+        <p style="font-size: 1.25rem; font-weight: bold; color: #27ae60; margin-bottom: 0.5rem;">${{ producto.precio_venta }}</p>
+        <p style="color: {% if producto.stock_bajo %}#e74c3c{% else %}#666{% endif %}; margin-bottom: 1rem;">
+            Stock: {{ producto.stock_actual }} {% if producto.stock_bajo %}(¡Bajo!){% endif %}
+        </p>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'detalle_producto' producto.id %}" class="btn" style="flex: 1; text-align: center;">Ver Detalles</a>
+            <button onclick="agregarAlCarrito({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio_venta }})" class="btn" style="flex: 1;">Agregar</button>
+        </div>
+    </div>
+    {% empty %}
+    <p>No se encontraron productos.</p>
+    {% endfor %}
+</div>
+
+<!-- Carrito flotante -->
+<div id="carrito-flotante" style="position: fixed; bottom: 20px; right: 20px; background: white; border: 2px solid #3498db; border-radius: 8px; padding: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: none; z-index: 1000;">
+    <h4 style="margin-bottom: 0.5rem;">🛒 Carrito (<span id="carrito-cantidad">0</span>)</h4>
+    <p style="margin-bottom: 0.5rem;">Total: $<span id="carrito-total">0.00</span></p>
+    <button onclick="verCarrito()" class="btn" style="width: 100%;">Ver Carrito</button>
+</div>
+
+<script>
+let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+function agregarAlCarrito(productoId, nombre, precio) {
+    const itemExistente = carrito.find(item => item.producto_id === productoId);
+    
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({
+            producto_id: productoId,
+            nombre: nombre,
+            precio: precio,
+            cantidad: 1
+        });
+    }
+    
+    guardarCarrito();
+    actualizarCarritoFlotante();
+    
+    // Mostrar notificación
+    mostrarNotificacion(`${nombre} agregado al carrito`);
+}
+
+function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+function actualizarCarritoFlotante() {
+    const cantidad = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    
+    document.getElementById('carrito-cantidad').textContent = cantidad;
+    document.getElementById('carrito-total').textContent = total.toFixed(2);
+    
+    const carritoFlotante = document.getElementById('carrito-flotante');
+    carritoFlotante.style.display = cantidad > 0 ? 'block' : 'none';
+}
+
+function verCarrito() {
+    window.location.href = '/ventas/online/?carrito=true';
+}
+
+function mostrarNotificacion(mensaje) {
+    const notificacion = document.createElement('div');
+    notificacion.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 1rem; border-radius: 4px; z-index: 1001; animation: fadeIn 0.3s;';
+    notificacion.textContent = mensaje;
+    document.body.appendChild(notificacion);
+    
+    setTimeout(() => {
+        notificacion.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => notificacion.remove(), 300);
+    }, 2000);
+}
+
+// Inicializar carrito al cargar
+actualizarCarritoFlotante();
+</script>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+</style>
+{% endblock %}

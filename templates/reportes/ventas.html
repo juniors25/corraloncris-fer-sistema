@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Ventas - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Reporte de Ventas</h2>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" style="display: flex; gap: 1rem; align-items: center;">
+        <label>Período:</label>
+        <select name="periodo" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="hoy" {% if periodo == 'hoy' %}selected{% endif %}>Hoy</option>
+            <option value="semana" {% if periodo == 'semana' %}selected{% endif %}>Última Semana</option>
+            <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
+            <option value="anio" {% if periodo == 'anio' %}selected{% endif %}>Último Año</option>
+        </select>
+        <button type="submit" class="btn">Filtrar</button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3 style="color: #3498db; margin-bottom: 0.5rem;">Total Ventas</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_ventas }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #27ae60; margin-bottom: 0.5rem;">Total Facturado</h3>
+        <p style="font-size: 2rem; font-weight: bold;">${{ total_facturado|floatformat:2 }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #9b59b6; margin-bottom: 0.5rem;">Promedio Venta</h3>
+        <p style="font-size: 2rem; font-weight: bold;">${{ promedio_venta|floatformat:2 }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #f39c12; margin-bottom: 0.5rem;">Ventas Locales</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ ventas_locales }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #e74c3c; margin-bottom: 0.5rem;">Ventas Online</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ ventas_online }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #1abc9c; margin-bottom: 0.5rem;">Completadas</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ ventas_completadas }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #e67e22; margin-bottom: 0.5rem;">Pendientes</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ ventas_pendientes }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Ventas Recientes</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Número</th>
+                <th style="padding: 0.5rem; text-align: left;">Tipo</th>
+                <th style="padding: 0.5rem; text-align: left;">Estado</th>
+                <th style="padding: 0.5rem; text-align: left;">Total</th>
+                <th style="padding: 0.5rem; text-align: left;">Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for venta in ventas_recientes %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ venta.numero }}</td>
+                <td style="padding: 0.5rem;">{{ venta.get_tipo_venta_display }}</td>
+                <td style="padding: 0.5rem;">{{ venta.get_estado_display }}</td>
+                <td style="padding: 0.5rem;">${{ venta.total }}</td>
+                <td style="padding: 0.5rem;">{{ venta.created_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 0.5rem; text-align: center;">No hay ventas registradas en este período</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{% url 'dashboard_reportes' %}" class="btn">Volver a Reportes</a>
+</div>
+{% endblock %}

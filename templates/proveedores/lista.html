@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Proveedores - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Gestión de Proveedores</h2>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <form method="get" style="display: flex; gap: 0.5rem; flex: 1;">
+            <input type="text" name="busqueda" placeholder="Buscar proveedor..." value="{{ request.GET.busqueda }}" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <button type="submit" class="btn">Buscar</button>
+        </form>
+        <a href="{% url 'nuevo_proveedor' %}" class="btn">Nuevo Proveedor</a>
+    </div>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Nombre</th>
+                <th style="padding: 0.5rem; text-align: left;">CUIT</th>
+                <th style="padding: 0.5rem; text-align: left;">Teléfono</th>
+                <th style="padding: 0.5rem; text-align: left;">Email</th>
+                <th style="padding: 0.5rem; text-align: left;">Contacto</th>
+                <th style="padding: 0.5rem; text-align: left;">Estado</th>
+                <th style="padding: 0.5rem; text-align: left;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proveedor in proveedores %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ proveedor.nombre }}</td>
+                <td style="padding: 0.5rem;">{{ proveedor.cuit|default:"-" }}</td>
+                <td style="padding: 0.5rem;">{{ proveedor.telefono|default:"-" }}</td>
+                <td style="padding: 0.5rem;">{{ proveedor.email|default:"-" }}</td>
+                <td style="padding: 0.5rem;">{{ proveedor.contacto_principal|default:"-" }}</td>
+                <td style="padding: 0.5rem;">
+                    <span style="padding: 0.25rem 0.5rem; border-radius: 4px; background-color: {% if proveedor.activo %}#27ae60{% else %}#e74c3c{% endif %}; color: white;">
+                        {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </td>
+                <td style="padding: 0.5rem;">
+                    <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn" style="padding: 0.25rem 0.5rem;">Editar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 0.5rem; text-align: center;">No hay proveedores registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

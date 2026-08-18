@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Productos - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Reporte de Productos e Inventario</h2>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3 style="color: #3498db; margin-bottom: 0.5rem;">Total Productos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_productos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #27ae60; margin-bottom: 0.5rem;">Activos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ productos_activos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #95a5a6; margin-bottom: 0.5rem;">Inactivos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ productos_inactivos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #e74c3c; margin-bottom: 0.5rem;">Stock Bajo</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ stock_bajo }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #c0392b; margin-bottom: 0.5rem;">Sin Stock</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ sin_stock }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #9b59b6; margin-bottom: 0.5rem;">Valor Inventario</h3>
+        <p style="font-size: 1.5rem; font-weight: bold;">${{ valor_inventario|floatformat:2 }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #f39c12; margin-bottom: 0.5rem;">Valor Venta</h3>
+        <p style="font-size: 1.5rem; font-weight: bold;">${{ valor_venta_inventario|floatformat:2 }}</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: #e74c3c;">⚠️ Productos con Stock Bajo</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="padding: 0.5rem; text-align: left;">Producto</th>
+                    <th style="padding: 0.5rem; text-align: left;">Stock Actual</th>
+                    <th style="padding: 0.5rem; text-align: left;">Mínimo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_con_stock_bajo %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 0.5rem;">{{ producto.nombre }}</td>
+                    <td style="padding: 0.5rem; color: #e74c3c; font-weight: bold;">{{ producto.stock_actual }}</td>
+                    <td style="padding: 0.5rem;">{{ producto.stock_minimo }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 0.5rem; text-align: center;">No hay productos con stock bajo</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: #c0392b;">🚫 Productos Sin Stock</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="padding: 0.5rem; text-align: left;">Producto</th>
+                    <th style="padding: 0.5rem; text-align: left;">Categoría</th>
+                    <th style="padding: 0.5rem; text-align: left;">Precio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_sin_stock %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 0.5rem;">{{ producto.nombre }}</td>
+                    <td style="padding: 0.5rem;">{{ producto.categoria.nombre|default:"-" }}</td>
+                    <td style="padding: 0.5rem;">${{ producto.precio_venta }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 0.5rem; text-align: center;">No hay productos sin stock</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{% url 'dashboard_reportes' %}" class="btn">Volver a Reportes</a>
+</div>
+{% endblock %}

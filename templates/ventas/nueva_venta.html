@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Venta - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Nueva Venta Local</h2>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+        <div>
+            <h3 style="margin-bottom: 1rem;">Buscar Producto</h3>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                <input type="text" id="busqueda-producto" placeholder="Código de barras o nombre..." style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <button onclick="buscarProducto()" class="btn">Buscar</button>
+            </div>
+            
+            <div id="resultados-busqueda" style="margin-bottom: 1rem;"></div>
+            
+            <h3 style="margin-bottom: 1rem;">Carrito de Venta</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="padding: 0.5rem; text-align: left;">Producto</th>
+                        <th style="padding: 0.5rem; text-align: left;">Cantidad</th>
+                        <th style="padding: 0.5rem; text-align: left;">Precio</th>
+                        <th style="padding: 0.5rem; text-align: left;">Subtotal</th>
+                        <th style="padding: 0.5rem; text-align: left;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="carrito-items">
+                </tbody>
+            </table>
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 1rem;">Resumen de Venta</h3>
+            <div class="card" style="background-color: #f8f9fa;">
+                <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
+                <p><strong>Descuento:</strong> $<input type="number" id="descuento" value="0" min="0" step="0.01" style="width: 80px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;"></p>
+                <p style="font-size: 1.25rem; font-weight: bold; margin-top: 1rem;"><strong>Total:</strong> $<span id="total">0.00</span></p>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">Cliente (opcional):</label>
+                    <select id="cliente" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Cliente ocasional</option>
+                    </select>
+                </div>
+                
+                <button onclick="completarVenta()" class="btn" style="width: 100%; margin-top: 1rem;">Completar Venta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let carrito = [];
+
+function buscarProducto() {
+    const busqueda = document.getElementById('busqueda-producto').value;
+    // Aquí se implementaría la búsqueda real
+    alert('Funcionalidad de búsqueda en desarrollo');
+}
+
+function agregarAlCarrito(producto) {
+    const itemExistente = carrito.find(item => item.producto_id === producto.id);
+    
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({
+            producto_id: producto.id,
+            nombre: producto.nombre,
+            precio: producto.precio_venta,
+            cantidad: 1
+        });
+    }
+    
+    actualizarCarrito();
+}
+
+function actualizarCarrito() {
+    const tbody = document.getElementById('carrito-items');
+    tbody.innerHTML = '';
+    
+    let subtotal = 0;
+    
+    carrito.forEach((item, index) => {
+        const itemSubtotal = item.precio * item.cantidad;
+        subtotal += itemSubtotal;
+        
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">${item.nombre}</td>
+                <td style="padding: 0.5rem;">
+                    <input type="number" value="${item.cantidad}" min="1" onchange="actualizarCantidad(${index}, this.value)" style="width: 60px; padding: 0.25rem;">
+                </td>
+                <td style="padding: 0.5rem;">$${item.precio}</td>
+                <td style="padding: 0.5rem;">$${itemSubtotal.toFixed(2)}</td>
+                <td style="padding: 0.5rem;">
+                    <button onclick="eliminarDelCarrito(${index})" class="btn btn-danger" style="padding: 0.25rem 0.5rem;">X</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+    actualizarTotal();
+}
+
+function actualizarCantidad(index, cantidad) {
+    carrito[index].cantidad = parseInt(cantidad);
+    actualizarCarrito();
+}
+
+function eliminarDelCarrito(index) {
+    carrito.splice(index, 1);
+    actualizarCarrito();
+}
+
+function actualizarTotal() {
+    const subtotal = parseFloat(document.getElementById('subtotal').textContent);
+    const descuento = parseFloat(document.getElementById('descuento').value) || 0;
+    const total = subtotal - descuento;
+    document.getElementById('total').textContent = total.toFixed(2);
+}
+
+document.getElementById('descuento').addEventListener('change', actualizarTotal);
+
+function completarVenta() {
+    if (carrito.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('items', JSON.stringify(carrito));
+    formData.append('cliente_id', document.getElementById('cliente').value);
+    
+    fetch('{% url "nueva_venta" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Venta completada exitosamente');
+            carrito = [];
+            actualizarCarrito();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al completar la venta');
+    });
+}
+</script>
+{% endblock %}

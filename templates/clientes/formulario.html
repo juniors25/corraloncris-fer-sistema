@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if cliente %}Editar{% else %}Nuevo{% endif %} Cliente - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">{% if cliente %}Editar{% else %}Nuevo{% endif %} Cliente</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="nombre">Nombre Completo: *</label>
+                <input type="text" id="nombre" name="nombre" value="{% if cliente %}{{ cliente.nombre }}{% endif %}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo_documento">Tipo de Documento:</label>
+                <select id="tipo_documento" name="tipo_documento">
+                    <option value="">Seleccionar...</option>
+                    <option value="dni" {% if cliente.tipo_documento == 'dni' %}selected{% endif %}>DNI</option>
+                    <option value="cuil" {% if cliente.tipo_documento == 'cuil' %}selected{% endif %}>CUIL</option>
+                    <option value="cuit" {% if cliente.tipo_documento == 'cuit' %}selected{% endif %}>CUIT</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="numero_documento">Número de Documento:</label>
+                <input type="text" id="numero_documento" name="numero_documento" value="{% if cliente %}{{ cliente.numero_documento }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono">Teléfono:</label>
+                <input type="tel" id="telefono" name="telefono" value="{% if cliente %}{{ cliente.telefono }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{% if cliente %}{{ cliente.email }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="codigo_postal">Código Postal:</label>
+                <input type="text" id="codigo_postal" name="codigo_postal" value="{% if cliente %}{{ cliente.codigo_postal }}{% endif %}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="direccion">Dirección:</label>
+            <textarea id="direccion" name="direccion" rows="2">{% if cliente %}{{ cliente.direccion }}{% endif %}</textarea>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="ciudad">Ciudad:</label>
+                <input type="text" id="ciudad" name="ciudad" value="{% if cliente %}{{ cliente.ciudad }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="provincia">Provincia:</label>
+                <input type="text" id="provincia" name="provincia" value="{% if cliente %}{{ cliente.provincia }}{% endif %}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="notas">Notas:</label>
+            <textarea id="notas" name="notas" rows="3">{% if cliente %}{{ cliente.notas }}{% endif %}</textarea>
+        </div>
+        
+        {% if cliente %}
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="activo" {% if cliente.activo %}checked{% endif %}>
+                Cliente Activo
+            </label>
+        </div>
+        {% endif %}
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" class="btn">{% if cliente %}Actualizar{% else %}Crear{% endif %} Cliente</button>
+            <a href="{% url 'lista_clientes' %}" class="btn btn-danger">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

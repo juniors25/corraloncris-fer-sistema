@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Escanear Producto - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Escanear Producto</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 1rem;">Opciones de Escaneo</h3>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <button onclick="setTipo('barras')" class="btn" id="btn-barras">Código de Barras</button>
+            <button onclick="setTipo('qr')" class="btn" id="btn-qr">Código QR</button>
+        </div>
+    </div>
+    
+    <form id="scan-form" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="tipo_codigo" id="tipo_codigo" value="barras">
+        
+        <div class="form-group">
+            <label for="codigo">Escanear Código:</label>
+            <input type="text" id="codigo" name="codigo" placeholder="Usar scanner o cámara..." autofocus>
+        </div>
+        
+        <button type="submit" class="btn">Buscar Producto</button>
+    </form>
+    
+    <div id="resultado" style="margin-top: 1.5rem; display: none;">
+        <div class="card" style="background-color: #d4edda; border: 1px solid #c3e6cb;">
+            <h3 style="color: #155724;">Producto Encontrado</h3>
+            <p><strong>Nombre:</strong> <span id="prod-nombre"></span></p>
+            <p><strong>Precio:</strong> $<span id="prod-precio"></span></p>
+            <p><strong>Stock:</strong> <span id="prod-stock"></span></p>
+        </div>
+    </div>
+    
+    <div id="error" style="margin-top: 1.5rem; display: none;">
+        <div class="card" style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
+            <h3 style="color: #721c24;">Producto No Encontrado</h3>
+            <p id="error-mensaje"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function setTipo(tipo) {
+    document.getElementById('tipo_codigo').value = tipo;
+    document.getElementById('btn-barras').style.backgroundColor = tipo === 'barras' ? '#2980b9' : '#3498db';
+    document.getElementById('btn-qr').style.backgroundColor = tipo === 'qr' ? '#2980b9' : '#3498db';
+}
+
+document.getElementById('scan-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "escanear_producto" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('resultado').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('prod-nombre').textContent = data.producto.nombre;
+            document.getElementById('prod-precio').textContent = data.producto.precio;
+            document.getElementById('prod-stock').textContent = data.producto.stock;
+        } else {
+            document.getElementById('resultado').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-mensaje').textContent = data.error;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+
+// Inicializar botones
+setTipo('barras');
+</script>
+{% endblock %}

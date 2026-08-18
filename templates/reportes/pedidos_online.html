@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Pedidos Online - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Reporte de Pedidos Online</h2>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3 style="color: #3498db; margin-bottom: 0.5rem;">Total Pedidos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_pedidos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #f39c12; margin-bottom: 0.5rem;">Recibidos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ pedidos_recibidos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #3498db; margin-bottom: 0.5rem;">Procesando</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ pedidos_procesando }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #27ae60; margin-bottom: 0.5rem;">Listos</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ pedidos_listos }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #1abc9c; margin-bottom: 0.5rem;">Entregados</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ pedidos_entregados }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #e74c3c; margin-bottom: 0.5rem;">Cancelados</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ pedidos_cancelados }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: #9b59b6; margin-bottom: 0.5rem;">Valor Total</h3>
+        <p style="font-size: 1.5rem; font-weight: bold;">${{ valor_pedidos|floatformat:2 }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Pedidos Recientes</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Número</th>
+                <th style="padding: 0.5rem; text-align: left;">Cliente</th>
+                <th style="padding: 0.5rem; text-align: left;">Teléfono</th>
+                <th style="padding: 0.5rem; text-align: left;">Estado</th>
+                <th style="padding: 0.5rem; text-align: left;">Total</th>
+                <th style="padding: 0.5rem; text-align: left;">Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos_recientes %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ pedido.venta.numero }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.nombre_cliente }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.telefono }}</td>
+                <td style="padding: 0.5rem;">
+                    <span style="padding: 0.25rem 0.5rem; border-radius: 4px; background-color: 
+                        {% if pedido.estado == 'recibido' %}#f39c12
+                        {% elif pedido.estado == 'procesando' %}#3498db
+                        {% elif pedido.estado == 'listo' %}#27ae60
+                        {% elif pedido.estado == 'entregado' %}#95a5a6
+                        {% else %}#e74c3c{% endif %}; color: white;">
+                        {{ pedido.get_estado_display }}
+                    </span>
+                </td>
+                <td style="padding: 0.5rem;">${{ pedido.venta.total }}</td>
+                <td style="padding: 0.5rem;">{{ pedido.created_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 0.5rem; text-align: center;">No hay pedidos registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{% url 'dashboard_reportes' %}" class="btn">Volver a Reportes</a>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Pedido {{ pedido.venta.numero }} - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Detalle Pedido {{ pedido.venta.numero }}</h2>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div>
+            <h3 style="margin-bottom: 1rem;">Información del Cliente</h3>
+            <p><strong>Nombre:</strong> {{ pedido.nombre_cliente }}</p>
+            <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+            <p><strong>Email:</strong> {{ pedido.email|default:"No proporcionado" }}</p>
+            <p><strong>Dirección:</strong> {{ pedido.direccion_entrega|default:"Retiro en local" }}</p>
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 1rem;">Estado del Pedido</h3>
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="estado">Estado Actual:</label>
+                    <select id="estado" name="estado" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        {% for value, label in pedido.ESTADO_CHOICES %}
+                        <option value="{{ value }}" {% if pedido.estado == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="enviar_whatsapp" {% if pedido.mensaje_whatsapp_enviado %}checked disabled{% endif %}>
+                        Enviar notificación por WhatsApp
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn">Actualizar Estado</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Productos del Pedido</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 0.5rem; text-align: left;">Producto</th>
+                <th style="padding: 0.5rem; text-align: left;">Cantidad</th>
+                <th style="padding: 0.5rem; text-align: left;">Precio Unitario</th>
+                <th style="padding: 0.5rem; text-align: left;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pedido.venta.items.all %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 0.5rem;">{{ item.producto.nombre }}</td>
+                <td style="padding: 0.5rem;">{{ item.cantidad }}</td>
+                <td style="padding: 0.5rem;">${{ item.precio_unitario }}</td>
+                <td style="padding: 0.5rem;">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background-color: #f8f9fa;">
+                <td colspan="3" style="padding: 0.5rem; text-align: right; font-weight: bold;">Subtotal:</td>
+                <td style="padding: 0.5rem; font-weight: bold;">${{ pedido.venta.subtotal }}</td>
+            </tr>
+            <tr style="background-color: #f8f9fa;">
+                <td colspan="3" style="padding: 0.5rem; text-align: right; font-weight: bold;">Descuento:</td>
+                <td style="padding: 0.5rem; font-weight: bold;">-${{ pedido.venta.descuento }}</td>
+            </tr>
+            <tr style="background-color: #e8f5e9;">
+                <td colspan="3" style="padding: 0.5rem; text-align: right; font-weight: bold;">Total:</td>
+                <td style="padding: 0.5rem; font-weight: bold; font-size: 1.25rem;">${{ pedido.venta.total }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Información de Facturación</h3>
+    {% if pedido.venta.factura %}
+    <p><strong>Tipo de Comprobante:</strong> {{ pedido.venta.factura.get_tipo_comprobante_display }}</p>
+    <p><strong>Número AFIP:</strong> {{ pedido.venta.factura.numero_afip|default:"Pendiente" }}</p>
+    <p><strong>Estado ARCA:</strong> {{ pedido.venta.factura.estado_arca }}</p>
+    {% else %}
+    <p>No se ha generado factura aún.</p>
+    <button onclick="generarFactura({{ pedido.venta.id }})" class="btn">Generar Factura</button>
+    {% endif %}
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{% url 'lista_pedidos' %}" class="btn">Volver a la Lista</a>
+</div>
+
+<script>
+function generarFactura(ventaId) {
+    alert('Funcionalidad de facturación ARCA en desarrollo');
+}
+</script>
+{% endblock %}

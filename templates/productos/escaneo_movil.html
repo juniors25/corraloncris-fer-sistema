@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}Escaneo Móvil - Ferretería Corralón{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Escaneo de Códigos - Dispositivo Móvil</h2>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        <!-- Sección de escaneo -->
+        <div>
+            <h3 style="margin-bottom: 1rem;">📷 Escanear Código</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Tipo de Código:</label>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="setTipo('barras')" class="btn" id="btn-barras">Código de Barras</button>
+                    <button onclick="setTipo('qr')" class="btn" id="btn-qr">Código QR</button>
+                </div>
+            </div>
+            
+            <!-- Contenedor de cámara -->
+            <div id="camera-container" style="position: relative; width: 100%; max-width: 400px; margin: 0 auto; background: #000; border-radius: 8px; overflow: hidden;">
+                <video id="video" style="width: 100%; height: auto; display: none;"></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                
+                <div id="camera-placeholder" style="padding: 2rem; text-align: center; color: white;">
+                    <p style="font-size: 3rem; margin-bottom: 1rem;">📷</p>
+                    <p>Click para activar cámara</p>
+                </div>
+                
+                <div id="camera-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; display: none;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border: 3px solid #00ff00; border-radius: 8px;"></div>
+                    <div style="position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; color: white; background: rgba(0,0,0,0.5); padding: 0.5rem;">
+                        Centrar código en el recuadro
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem;">
+                <button onclick="activarCamara()" class="btn" id="btn-activar-camara">Activar Cámara</button>
+                <button onclick="desactivarCamara()" class="btn btn-danger" id="btn-desactivar-camara" style="display: none;">Desactivar Cámara</button>
+            </div>
+            
+            <!-- Entrada manual alternativa -->
+            <div style="margin-top: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
+                <h4 style="margin-bottom: 0.5rem;">O entrada manual:</h4>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="codigo-manual" placeholder="Escriba o escanee código..." style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <button onclick="procesarCodigoManual()" class="btn">Buscar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resultado del escaneo -->
+        <div id="resultado-section" style="display: none;">
+            <h3 style="margin-bottom: 1rem;">📦 Producto Encontrado</h3>
+            
+            <div class="card" style="background-color: #d4edda; border: 1px solid #c3e6cb; margin-bottom: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">{{ resultado.producto.nombre }}</h4>
+                <p><strong>Código:</strong> {{ resultado.producto.codigo_barras|default:"N/A" }}</p>
+                <p><strong>Categoría:</strong> {{ resultado.producto.categoria|default:"N/A" }}</p>
+                <p><strong>Precio Venta:</strong> ${{ resultado.producto.precio_venta }}</p>
+                <p><strong>Stock Actual:</strong> {{ resultado.producto.stock_actual }}</p>
+            </div>
+            
+            <!-- Formulario de actualización de stock -->
+            <div class="card" style="background-color: #f8f9fa;">
+                <h4 style="margin-bottom: 1rem;">Actualizar Stock</h4>
+                
+                <div class="form-group">
+                    <label for="tipo-movimiento">Tipo de Movimiento:</label>
+                    <select id="tipo-movimiento" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="entrada">Entrada (+)</option>
+                        <option value="salida">Salida (-)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" id="cantidad" value="1" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="motivo">Motivo:</label>
+                    <input type="text" id="motivo" value="Escaneo móvil" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <button onclick="actualizarStock()" class="btn" style="width: 100%;">Actualizar Stock</button>
+            </div>
+        </div>
+        
+        <!-- Error -->
+        <div id="error-section" style="display: none;">
+            <div class="card" style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
+                <h4 style="color: #721c24; margin-bottom: 0.5rem;">❌ Error</h4>
+                <p id="error-mensaje" style="color: #721c24;"></p>
+                <button onclick="reiniciarEscaneo()" class="btn" style="margin-top: 1rem;">Reiniciar Escaneo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para escaneo -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script>
+let tipoCodigo = 'barras';
+let codigoScanner = null;
+let stream = null;
+let productoEncontrado = null;
+
+function setTipo(tipo) {
+    tipoCodigo = tipo;
+    document.getElementById('btn-barras').style.backgroundColor = tipo === 'barras' ? '#2980b9' : '#3498db';
+    document.getElementById('btn-qr').style.backgroundColor = tipo === 'qr' ? '#2980b9' : '#3498db';
+}
+
+async function activarCamara() {
+    try {
+        const video = document.getElementById('video');
+        const placeholder = document.getElementById('camera-placeholder');
+        const overlay = document.getElementById('camera-overlay');
+        
+        // Solicitar acceso a la cámara
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } // Cámara trasera en móviles
+        });
+        
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        overlay.style.display = 'block';
+        
+        document.getElementById('btn-activar-camara').style.display = 'none';
+        document.getElementById('btn-desactivar-camara').style.display = 'inline-block';
+        
+        // Iniciar escaneo
+        iniciarEscaneo();
+        
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        alert('No se pudo acceder a la cámara. Verifique los permisos o use la entrada manual.');
+    }
+}
+
+function desactivarCamara() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    if (codigoScanner) {
+        codigoScanner.reset();
+        codigoScanner = null;
+    }
+    
+    const video = document.getElementById('video');
+    const placeholder = document.getElementById('camera-placeholder');
+    const overlay = document.getElementById('camera-overlay');
+    
+    video.style.display = 'none';
+    placeholder.style.display = 'block';
+    overlay.style.display = 'none';
+    
+    document.getElementById('btn-activar-camara').style.display = 'inline-block';
+    document.getElementById('btn-desactivar-camara').style.display = 'none';
+}
+
+function iniciarEscaneo() {
+    const video = document.getElementById('video');
+    
+    codigoScanner = new ZXing.BrowserMultiFormatReader();
+    
+    codigoScanner.decodeFromVideoDevice(null, video, (result, err) => {
+        if (result) {
+            // Código encontrado
+            procesarCodigo(result.text);
+        }
+    });
+}
+
+function procesarCodigoManual() {
+    const codigo = document.getElementById('codigo-manual').value;
+    if (codigo) {
+        procesarCodigo(codigo);
+    }
+}
+
+function procesarCodigo(codigo) {
+    const formData = new FormData();
+    formData.append('codigo', codigo);
+    formData.append('tipo_codigo', tipoCodigo);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "procesar_escaneo_movil" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            productoEncontrado = data.producto;
+            mostrarResultado(data.producto);
+            desactivarCamara();
+        } else {
+            mostrarError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarError('Error al procesar el código');
+    });
+}
+
+function mostrarResultado(producto) {
+    document.getElementById('resultado-section').style.display = 'block';
+    document.getElementById('error-section').style.display = 'none';
+    
+    // Actualizar información del producto
+    const resultadoDiv = document.querySelector('#resultado-section .card');
+    resultadoDiv.innerHTML = `
+        <h4 style="margin-bottom: 0.5rem;">${producto.nombre}</h4>
+        <p><strong>Código:</strong> ${producto.codigo_barras || 'N/A'}</p>
+        <p><strong>Categoría:</strong> ${producto.categoria || 'N/A'}</p>
+        <p><strong>Precio Venta:</strong> $${producto.precio_venta}</p>
+        <p><strong>Stock Actual:</strong> ${producto.stock_actual}</p>
+    `;
+}
+
+function mostrarError(mensaje) {
+    document.getElementById('resultado-section').style.display = 'none';
+    document.getElementById('error-section').style.display = 'block';
+    document.getElementById('error-mensaje').textContent = mensaje;
+}
+
+function reiniciarEscaneo() {
+    document.getElementById('resultado-section').style.display = 'none';
+    document.getElementById('error-section').style.display = 'none';
+    document.getElementById('codigo-manual').value = '';
+    productoEncontrado = null;
+}
+
+function actualizarStock() {
+    if (!productoEncontrado) {
+        alert('No hay producto seleccionado');
+        return;
+    }
+    
+    const cantidad = document.getElementById('cantidad').value;
+    const tipo = document.getElementById('tipo-movimiento').value;
+    const motivo = document.getElementById('motivo').value;
+    
+    const formData = new FormData();
+    formData.append('producto_id', productoEncontrado.id);
+    formData.append('cantidad', cantidad);
+    formData.append('tipo', tipo);
+    formData.append('motivo', motivo);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "actualizar_stock_movil" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ ${data.mensaje}`);
+            reiniciarEscaneo();
+        } else {
+            alert(`❌ Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar el stock');
+    });
+}
+
+// Inicializar
+setTipo('barras');
+
+// Manejar entrada manual con Enter
+document.getElementById('codigo-manual').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        procesarCodigoManual();
+    }
+});
+</script>
+
+<style>
+#camera-container {
+    aspect-ratio: 3/4;
+}
+
+@media (max-width: 768px) {
+    #camera-container {
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
