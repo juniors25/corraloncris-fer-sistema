@@ -27,6 +27,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']  # Aceptar cualquier host (para desarrollo local)
 
+# Security settings for Railway
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-67413.up.railway.app',
+    'https://*.up.railway.app',
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
 
 # Application definition
 
