@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'clientes',
     'proveedores',
     'reportes',
+    'sync',  # Sistema de sincronización local-nube
 ]
 
 MIDDLEWARE = [
@@ -158,6 +159,13 @@ ARCA_MODO_DEMO = True  # Cambiar a False cuando se tenga cuenta real
 WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0'
 WHATSAPP_PHONE_NUMBER_ID = 'tu_phone_number_id_aqui'  # Reemplazar con ID real
 WHATSAPP_ACCESS_TOKEN = 'tu_access_token_aqui'  # Reemplazar con token real
+
+# Configuración del negocio para instalación local
+NOMBRE_NEGOCIO = 'Ferretería Corralón'
+DIRECCION_NEGOCIO = 'Dirección del negocio'
+TELEFONO_NEGOCIO = 'Teléfono'
+LOGO_NEGOCIO = 'logo.png'  # Archivo en static/
+CUIT_NEGOCIO = '20-00000000-0'
 
 
 # Email

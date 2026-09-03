@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 
 class Cliente(models.Model):
     TIPO_DOCUMENTO_CHOICES = [
@@ -32,6 +33,11 @@ class Cliente(models.Model):
     ultima_factura = models.CharField(max_length=50, blank=True)
     ultimo_remito = models.CharField(max_length=50, blank=True)
     
+    # Ajuste por inflación
+    indice_inflacion_base = models.DecimalField(max_digits=10, decimal_places=4, default=1.0,
+                                            help_text='Índice de inflación base para ajuste de saldos')
+    fecha_ajuste_inflacion = models.DateField(null=True, blank=True)
+    
     activo = models.BooleanField(default=True)
     notas = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -57,6 +63,13 @@ class Cliente(models.Model):
             return (self.saldo_deudor / self.limite_credito) * 100
         return 0
     
+    @property
+    def saldo_deudor_ajustado(self):
+        """Saldo deudor ajustado por inflación"""
+        if self.indice_inflacion_base > 1.0:
+            return self.saldo_deudor * self.indice_inflacion_base
+        return self.saldo_deudor
+    
     def actualizar_estado_credito(self):
         """Actualizar el estado de crédito según el saldo deudor"""
         porcentaje = self.porcentaje_deuda
@@ -71,6 +84,23 @@ class Cliente(models.Model):
             self.estado_credito = 'normal'
         
         self.save()
+    
+    def actualizar_indice_inflacion(self, nuevo_indice):
+        """Actualizar índice de inflación y ajustar saldos"""
+        if self.indice_inflacion_base > 0:
+            # Calcular factor de ajuste
+            factor_ajuste = nuevo_indice / self.indice_inflacion_base
+            
+            # Ajustar saldo deudor
+            self.saldo_deudor = self.saldo_deudor * factor_ajuste
+            
+            # Actualizar índice
+            self.indice_inflacion_base = nuevo_indice
+            self.fecha_ajuste_inflacion = timezone.now().date()
+            
+            self.save()
+            return True
+        return False
     
     def registrar_factura(self, numero_factura, monto):
         """Registrar una nueva factura y actualizar saldo deudor"""
@@ -104,7 +134,9 @@ class FacturaCliente(models.Model):
     numero_comprobante = models.CharField(max_length=50)
     fecha_emision = models.DateField()
     fecha_vencimiento = models.DateField(blank=True, null=True)
-    monto_total = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    monto_original = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    monto_ajustado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                    help_text='Monto ajustado por inflación')
     monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     vinculada_arca = models.BooleanField(default=False)
@@ -123,23 +155,32 @@ class FacturaCliente(models.Model):
     
     @property
     def saldo_pendiente(self):
-        """Calcular saldo pendiente de pago"""
-        return self.monto_total - self.monto_pagado
+        """Calcular saldo pendiente de pago (usando monto ajustado si existe)"""
+        monto_a_usar = self.monto_ajustado if self.monto_ajustado else self.monto_original
+        return monto_a_usar - self.monto_pagado
     
     @property
     def esta_vencida(self):
         """Verificar si la factura está vencida"""
         if self.fecha_vencimiento and self.estado == 'pendiente':
-            from django.utils import timezone
             return timezone.now().date() > self.fecha_vencimiento
         return False
+    
+    def ajustar_por_inflacion(self, factor_inflacion):
+        """Ajustar monto por inflación"""
+        if self.monto_ajustado is None:
+            self.monto_ajustado = self.monto_original * factor_inflacion
+        else:
+            self.monto_ajustado = self.monto_ajustado * factor_inflacion
+        self.save()
     
     def registrar_pago(self, monto):
         """Registrar un pago parcial o total"""
         self.monto_pagado += monto
-        if self.monto_pagado >= self.monto_total:
+        monto_a_usar = self.monto_ajustado if self.monto_ajustado else self.monto_original
+        if self.monto_pagado >= monto_a_usar:
             self.estado = 'pagada'
-            self.monto_pagado = self.monto_total
+            self.monto_pagado = monto_a_usar
         self.save()
         
         # Actualizar saldo deudor del cliente

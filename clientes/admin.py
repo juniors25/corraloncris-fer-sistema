@@ -27,7 +27,7 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(FacturaCliente)
 class FacturaClienteAdmin(admin.ModelAdmin):
-    list_display = ['numero_comprobante', 'tipo_comprobante', 'cliente', 'fecha_emision', 'monto_total', 'saldo_pendiente', 'estado', 'vinculada_arca']
+    list_display = ['numero_comprobante', 'tipo_comprobante', 'cliente', 'fecha_emision', 'monto_original', 'saldo_pendiente', 'estado', 'vinculada_arca']
     list_filter = ['tipo_comprobante', 'estado', 'vinculada_arca', 'fecha_emision']
     search_fields = ['numero_comprobante', 'cliente__nombre', 'numero_afip']
     readonly_fields = ['saldo_pendiente', 'esta_vencida']
@@ -40,7 +40,7 @@ class FacturaClienteAdmin(admin.ModelAdmin):
             'fields': ('fecha_emision', 'fecha_vencimiento')
         }),
         ('Montos', {
-            'fields': ('monto_total', 'monto_pagado')
+            'fields': ('monto_original', 'monto_ajustado', 'monto_pagado')
         }),
         ('Estado y Vinculación', {
             'fields': ('estado', 'vinculada_arca')

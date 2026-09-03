@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Factura/Remito - {{ tipo_comprobante }}</title>
+    <style>
+        @media print {
+            @page { margin: 0; }
+            body { margin: 1cm; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .logo img {
+            max-width: 150px;
+            max-height: 80px;
+        }
+        
+        .comprobante-info {
+            text-align: right;
+        }
+        
+        .comprobante-info h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .info-box {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .info-box h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .totales {
+            text-align: right;
+            margin-top: 20px;
+        }
+        
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .btn-print {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        .btn-back {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: center; margin: 20px;">
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="btn-back" onclick="window.history.back()">← Volver</button>
+    </div>
+    
+    <div class="header">
+        <div class="logo">
+            <img src="/static/{{ logo }}" alt="Logo" onerror="this.style.display='none'">
+            <h2>{{ nombre_negocio }}</h2>
+            <p>{{ direccion }}</p>
+            <p>Tel: {{ telefono }}</p>
+        </div>
+        <div class="comprobante-info">
+            <h1>{{ tipo_comprobante }}</h1>
+            <p><strong>Número:</strong> {{ numero_comprobante }}</p>
+            <p><strong>Fecha:</strong> {{ fecha }}</p>
+            <p><strong>Vencimiento:</strong> {{ fecha_vencimiento }}</p>
+        </div>
+    </div>
+    
+    <div class="info-box">
+        <h3>DATOS DEL CLIENTE</h3>
+        <p><strong>Nombre:</strong> {{ cliente.nombre }}</p>
+        {% if cliente.tipo_documento %}
+        <p><strong>Documento:</strong> {{ cliente.get_tipo_documento_display }} {{ cliente.numero_documento }}</p>
+        {% endif %}
+        {% if cliente.direccion %}
+        <p><strong>Dirección:</strong> {{ cliente.direccion }}</p>
+        {% endif %}
+        {% if cliente.telefono %}
+        <p><strong>Teléfono:</strong> {{ cliente.telefono }}</p>
+        {% endif %}
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.producto.codigo_barras }}</td>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.precio_unitario }}</td>
+                <td>${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="totales">
+        <p><strong>Subtotal:</strong> ${{ subtotal }}</p>
+        <p><strong>IVA (21%):</strong> ${{ iva }}</p>
+        <p class="total"><strong>TOTAL:</strong> ${{ total }}</p>
+    </div>
+    
+    <div class="info-box">
+        <h3>OBSERVACIONES</h3>
+        <p>{{ observaciones|default:"Sin observaciones" }}</p>
+    </div>
+    
+    <div class="footer">
+        <p>{{ nombre_negocio }} - {{ direccion }} - Tel: {{ telefono }}</p>
+        <p>Comprobante generado: {{ fecha }}</p>
+        <p>Número AFIP: {{ numero_afip|default:"Pendiente de generación" }}</p>
+    </div>
+</body>
+</html>

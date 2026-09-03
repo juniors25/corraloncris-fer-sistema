@@ -86,6 +86,36 @@
             </div>
         </div>
         
+        <!-- Sincronización -->
+        <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 8px;">
+            <h4 style="color: #2e7d32; margin-bottom: 0.5rem;">� Sincronización</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="/sync/operaciones-pendientes/" class="btn" style="text-align: center;">Operaciones Pendientes</a>
+                <a href="/sync/sincronizar/" class="btn" style="text-align: center;">Sincronizar Manual</a>
+                <a href="/sync/logs/" class="btn" style="text-align: center;">Logs de Sincronización</a>
+            </div>
+        </div>
+        
+        <!-- POS Táctil -->
+        <div style="background-color: #fff3e0; padding: 1rem; border-radius: 8px;">
+            <h4 style="color: #e67e22; margin-bottom: 0.5rem;">🖥️ POS Táctil</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="/ventas/pos/" class="btn" style="text-align: center;">POS Mostrador</a>
+                <a href="/admin/ventas/caja/" class="btn" style="text-align: center;">Control de Caja</a>
+            </div>
+        </div>
+        
+        <!-- Gestión Avanzada -->
+        <div style="background-color: #f3e5f5; padding: 1rem; border-radius: 8px;">
+            <h4 style="color: #9b59b6; margin-bottom: 0.5rem;">🏭 Gestión Avanzada</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="/admin/productos/deposito/" class="btn" style="text-align: center;">Depósitos</a>
+                <a href="/admin/productos/kitproducto/" class="btn" style="text-align: center;">Kits de Productos</a>
+                <a href="/admin/productos/transferenciastock/" class="btn" style="text-align: center;">Transferencias</a>
+                <a href="/admin/ventas/acopio/" class="btn" style="text-align: center;">Acopio</a>
+            </div>
+        </div>
+        
         <!-- Reportes -->
         <div style="background-color: #fce4ec; padding: 1rem; border-radius: 8px;">
             <h4 style="color: #e91e63; margin-bottom: 0.5rem;">📈 Reportes</h4>
@@ -93,16 +123,6 @@
                 <a href="{% url 'dashboard_reportes' %}" class="btn" style="text-align: center;">Ver Reportes</a>
                 <a href="{% url 'reporte_ventas' %}" class="btn" style="text-align: center;">Ventas</a>
                 <a href="{% url 'reporte_productos' %}" class="btn" style="text-align: center;">Productos</a>
-            </div>
-        </div>
-        
-        <!-- Admin -->
-        <div style="background-color: #ffebee; padding: 1rem; border-radius: 8px;">
-            <h4 style="color: #c62828; margin-bottom: 0.5rem;">⚙️ Administración</h4>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <a href="/admin/" class="btn btn-danger" style="text-align: center;">Panel Admin</a>
-                <a href="/admin/auth/user/" class="btn" style="text-align: center;">Usuarios</a>
-                <a href="/admin/productos/categoria/" class="btn" style="text-align: center;">Categorías</a>
             </div>
         </div>
     </div>
